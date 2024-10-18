@@ -1,9 +1,13 @@
 import 'package:data_class/data_class.dart';
 import 'package:ios/auth/auth_service.dart';
 import 'package:ios/user/user_service.dart';
+import 'package:localstore/localstore.dart';
 
-final di = () {
-  final UserService userService = LocalUserService();
+late final di = () {
+  final db = Localstore.instance;
+  final users = db.collection('users');
+
+  final UserService userService = LocalUserService(users);
   final AuthService authService = LocalAuthService(userService: userService);
 
   return DI(

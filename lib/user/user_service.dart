@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 
-import 'package:ios/main.dart';
 import 'package:ios/user/user.dart';
+import 'package:localstore/localstore.dart';
 
 abstract class UserService {
   Future<User?> getUser(String login);
@@ -11,48 +10,28 @@ abstract class UserService {
 }
 
 class LocalUserService implements UserService {
-  static const _usersKey = 'users';
+  const LocalUserService(CollectionRef users) : _users = users;
 
-  final _users = {
-    for (final e in (prefs.getStringList(_usersKey) ?? [])
-        .map((e) => User.fromJson(jsonDecode(e))))
-      e.login: e,
-  };
-
-  Map<String, User> get users => _users;
-  set users(Map<String, User> value) {
-    _users.clear();
-    _users.addAll(value);
-
-    unawaited(
-      prefs.setStringList(
-        _usersKey,
-        users.values.map((e) => jsonEncode(e.toJson())).toList(),
-      ),
-    );
-  }
+  final CollectionRef _users;
 
   @override
   Future<User?> getUser(String login) async {
-    return users[login];
+    final data = await _users.doc(login).get();
+    return data != null ? User.fromJson(data) : null;
   }
 
   @override
   Future<void> updateUserLevel(String login, Level level) async {
-    final user = users[login]!;
-    users[login] = user.copyWith(level: level);
-    await prefs.setStringList(
-      _usersKey,
-      users.values.map((e) => jsonEncode(e.toJson())).toList(),
-    );
+    final user = await _users.doc(login).get();
+    if (user == null) {
+      throw 'user not found';
+    }
+
+    await _users.doc(login).set({'level': level.value});
   }
 
   @override
   Future<void> saveUser(User user) async {
-    users[user.login] = user;
-    await prefs.setStringList(
-      _usersKey,
-      users.values.map((e) => jsonEncode(e.toJson())).toList(),
-    );
+    _users.doc(user.login).set(user.toJson());
   }
 }

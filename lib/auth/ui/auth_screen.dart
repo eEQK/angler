@@ -95,7 +95,7 @@ class AuthScreen extends HookWidget {
                     displayError.value = false;
                     mode.value = _AuthMode.register;
                   },
-                  child: Text('I already have an account'),
+                  child: Text('I want to create an account'),
                 )
               else
                 TextButton(
