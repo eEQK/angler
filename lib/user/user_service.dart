@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:ios/lesson/lesson.dart';
 import 'package:ios/user/user.dart';
 import 'package:localstore/localstore.dart';
 
@@ -10,7 +11,7 @@ abstract class UserService {
 }
 
 class LocalUserService implements UserService {
-  const LocalUserService(CollectionRef users) : _users = users;
+  const LocalUserService(this._users);
 
   final CollectionRef _users;
 
@@ -27,11 +28,14 @@ class LocalUserService implements UserService {
       throw 'user not found';
     }
 
-    await _users.doc(login).set({'level': level.value});
+    await _users.doc(login).set(
+      {'level': level.toJson()},
+      SetOptions(merge: true),
+    );
   }
 
   @override
   Future<void> saveUser(User user) async {
-    _users.doc(user.login).set(user.toJson());
+    _users.doc(user.login).set(user.toJson(), SetOptions(merge: true));
   }
 }

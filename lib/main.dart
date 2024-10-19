@@ -4,13 +4,17 @@ import 'package:ios/auth/ui/auth_screen.dart';
 import 'package:ios/di.dart';
 import 'package:ios/home/home_screen.dart';
 import 'package:ios/home/language_level_screen.dart';
+import 'package:ios/lesson/lesson_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 late final SharedPreferencesWithCache prefs;
+final uuid = const Uuid();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await LocalLessonService.maybeInitializeFromCsv();
   prefs = await SharedPreferencesWithCache.create(
     cacheOptions: SharedPreferencesWithCacheOptions(),
   );

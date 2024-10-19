@@ -55,6 +55,11 @@ class LocalAuthService implements AuthService {
       return null;
     }
 
-    return userService.getUser(login);
+    final user = await userService.getUser(login);
+    if (user == null) {
+      await prefs.remove(_loginKey);
+    }
+
+    return user;
   }
 }
