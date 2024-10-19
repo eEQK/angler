@@ -36,6 +36,15 @@ class LocalLessonService implements LessonService {
 
   @override
   Future<void> submit(String user, String lessonId, List<int> answers) async {
+    final lesson = await getLesson(lessonId);
+
+    var correct = 0;
+    for (var i = 0; i < lesson.questions.length; i++) {
+      if (lesson.questions[i].correctAnswerIndex == answers[i]) {
+        correct++;
+      }
+    }
+
     final id = uuid.v7();
     _attempts.doc(id).set(
           Attempt(
@@ -43,6 +52,8 @@ class LocalLessonService implements LessonService {
             lessonId: lessonId,
             userId: user,
             answers: answers,
+            timestamp: DateTime.now().millisecondsSinceEpoch,
+            score: correct / lesson.questions.length,
           ).toJson(),
         );
   }

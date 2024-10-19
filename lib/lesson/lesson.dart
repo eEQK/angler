@@ -99,10 +99,15 @@ class Attempt {
     required this.lessonId,
     required this.userId,
     required this.answers,
+    required this.timestamp,
+    required this.score,
   });
 
   final String id;
   final String lessonId;
   final String userId;
   final List<int> answers;
+  final double score;
+  // milliseconds since epoch
+  final int timestamp;
 }
