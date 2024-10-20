@@ -27,14 +27,16 @@ class HomeScreen extends HookWidget {
     );
 
     if (user.connectionState == ConnectionState.waiting) {
-      return Center(child: CircularProgressIndicator());
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final lessonsRefreshTrigger = useState(0);
     final lessons = useMemoFuture(
       () => di.lessonService.getLessons(user.requireData!.level!),
+      [lessonsRefreshTrigger.value],
     );
     if (lessons.connectionState == ConnectionState.waiting) {
-      return Center(child: CircularProgressIndicator());
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final upcoming = lessons.requireData
@@ -64,7 +66,8 @@ class HomeScreen extends HookWidget {
             child: _HorizontalLessons(
               lessons: upcoming,
               onTap: (lesson) => Navigator.of(context)
-                  .pushNamed(LessonScreen.route, arguments: lesson.id),
+                  .pushNamed(LessonScreen.route, arguments: lesson.id)
+                  .then((_) => lessonsRefreshTrigger.value++),
             ),
           ),
           _Section(
@@ -72,7 +75,8 @@ class HomeScreen extends HookWidget {
             child: _HorizontalLessons(
               lessons: exams,
               onTap: (lesson) => Navigator.of(context)
-                  .pushNamed(LessonScreen.route, arguments: lesson.id),
+                  .pushNamed(LessonScreen.route, arguments: lesson.id)
+                  .then((_) => lessonsRefreshTrigger.value++),
             ),
           ),
           if (completed.isNotEmpty)
@@ -81,7 +85,8 @@ class HomeScreen extends HookWidget {
               child: _HorizontalLessons(
                 lessons: completed,
                 onTap: (lesson) => Navigator.of(context)
-                    .pushNamed(LessonScreen.route, arguments: lesson.id),
+                    .pushNamed(LessonScreen.route, arguments: lesson.id)
+                    .then((_) => lessonsRefreshTrigger.value++),
               ),
             ),
         ],
@@ -173,7 +178,50 @@ class _LessonCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Image.asset('assets/wallet.jpg'),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ColorFiltered(
+                colorFilter: ColorFilter.mode(
+                  lesson.isLocked
+                      ? Theme.of(context).colorScheme.surfaceContainer
+                      : Colors.transparent,
+                  BlendMode.saturation,
+                ),
+                child: Image.network(lesson.imageUrl, fit: BoxFit.cover),
+              ),
+              if (lesson.isCompleted)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+              if (lesson.isLocked)
+                Positioned.fill(
+                  child: Container(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainer
+                        .withAlpha(130),
+                    child: Center(
+                      child: Icon(
+                        Icons.lock,
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
         kVertical4,
         Text(

@@ -1,7 +1,18 @@
+import 'dart:developer';
+import 'dart:math';
+
 import 'package:flutter/services.dart';
 import 'package:ios/lesson/lesson.dart';
 import 'package:ios/main.dart';
 import 'package:localstore/localstore.dart';
+
+const _images = [
+  'https://images.unsplash.com/photo-1532033375034-a29004ea9769?q=50&w=1000&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1721332149346-00e39ce5c24f?q=50&w=1000&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1729281260962-96168dcaff4f?q=50&w=1000&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1729148074715-78de89a6bed2?q=50&w=1000&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1728934189385-ac692470acf6?q=50&w=1000&auto=format&fit=crop',
+];
 
 abstract class LessonService {
   Future<List<Lesson>> getLessons(Level level);
@@ -32,7 +43,10 @@ class LocalLessonService implements LessonService {
   Future<List<Lesson>> getLessons(Level level) async {
     // localstore doesn't seem to support querying, so get all and filter client-side
     final all = await _lessons.get();
-    return all!.values.map((e) => Lesson.fromJson(e)).toList();
+    return all!.values
+        .map((e) => Lesson.fromJson(e))
+        .where((e) => e.level == level)
+        .toList();
   }
 
   @override
@@ -58,7 +72,43 @@ class LocalLessonService implements LessonService {
           ).toJson(),
         );
 
+    final percentage = correct / lesson.questions.length;
+    // threshold for completion is so low just for testing purposes
+    const threshold = 0.2;
+    if (percentage >= threshold) {
+      await _lessons.doc(lessonId).set(lesson.toJson()..['isCompleted'] = true);
+      _checkIfExamUnlocked(lesson);
+    }
+
     return id;
+  }
+
+  void _checkIfExamUnlocked(Lesson lesson) async {
+    const quizzesPerExam = _targetQuizzes / _targetExams;
+
+    final ordinal = lesson.ordinal;
+    final lowerBound = ordinal ~/ quizzesPerExam * quizzesPerExam;
+    final upperBound = lowerBound + quizzesPerExam;
+
+    final lessons = await getLessons(lesson.level);
+    final quizzes = lessons
+        .where((e) => e.type == LessonType.quiz)
+        .where((e) => e.ordinal >= lowerBound && e.ordinal < upperBound)
+        .toList();
+
+    final completed = quizzes.every((e) => e.isCompleted);
+    if (completed) {
+      final exams = lessons.where((e) => e.type == LessonType.exam).toList();
+      final unlockedOrdinal = lowerBound ~/ quizzesPerExam;
+      final unlockedExam =
+          exams.firstWhere((e) => e.ordinal == unlockedOrdinal);
+
+      final exam = await _lessons.doc(unlockedExam.id).get();
+
+      await _lessons
+          .doc(unlockedExam.id)
+          .set(exam!..['isLocked'] = false);
+    }
   }
 
   @override
@@ -82,6 +132,7 @@ class LocalLessonService implements LessonService {
 
   static Future<void> maybeInitializeFromCsv() async {
     final coll = Localstore.instance.collection('lessons');
+    // await coll.delete();
     final items = await coll.get();
     if (items != null && items.isNotEmpty) {
       return;
@@ -139,10 +190,10 @@ class LocalLessonService implements LessonService {
     final chunks = questions.length ~/ _targetQuizzes;
 
     return List.generate(
-      chunks,
+      _targetQuizzes,
       (index) {
-        final start = index * _targetQuizzes;
-        final end = start + _targetQuizzes;
+        final start = index * chunks;
+        final end = start + chunks;
 
         return Lesson(
           id: uuid.v7(),
@@ -150,12 +201,13 @@ class LocalLessonService implements LessonService {
           description:
               'This chapter will give you some introduction into the terms used in business (change me)',
           label: 'Business headstart (change me)',
-          imageUrl: 'assets/wallet.jpg',
+          imageUrl: _images[Random().nextInt(_images.length)],
           type: LessonType.quiz,
           isCompleted: false,
           isLocked: false,
           questions: questions.sublist(start, end),
           level: level,
+          ordinal: index,
         );
       },
     );
@@ -163,11 +215,12 @@ class LocalLessonService implements LessonService {
 
   static List<Lesson> _calculateExams(List<Lesson> lessons) {
     final chunks = lessons.length ~/ _targetExams;
+
     return List.generate(
-      chunks,
+      _targetExams,
       (index) {
-        final start = index * _targetExams;
-        final end = start + _targetExams;
+        final start = index * chunks;
+        final end = start + chunks;
 
         return Lesson(
           id: uuid.v7(),
@@ -175,13 +228,14 @@ class LocalLessonService implements LessonService {
           description:
               'This exam will test your knowledge on the terms used in business (change me)',
           label: 'Business exam (change me)',
-          imageUrl: 'assets/wallet.jpg',
+          imageUrl: _images[Random().nextInt(_images.length)],
           type: LessonType.exam,
           isCompleted: false,
           isLocked: true,
           questions:
               lessons.sublist(start, end).expand((e) => e.questions).toList(),
           level: lessons.first.level,
+          ordinal: index,
         );
       },
     );

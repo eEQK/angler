@@ -24,7 +24,7 @@ class LessonCard extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: Image.asset(lesson.imageUrl, fit: BoxFit.cover),
+            child: Image.network(lesson.imageUrl, fit: BoxFit.cover),
           ),
           kVertical16,
           Padding(

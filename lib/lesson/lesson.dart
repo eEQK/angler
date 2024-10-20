@@ -55,10 +55,12 @@ class Lesson {
     required this.isLocked,
     required this.questions,
     required this.level,
+    required this.ordinal,
   });
 
   final String id;
   final String name;
+  final int ordinal;
 
   final String description;
   final String label;
