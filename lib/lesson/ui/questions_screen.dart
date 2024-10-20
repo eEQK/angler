@@ -88,7 +88,7 @@ class QuestionsScreen extends HookWidget {
                     );
 
                     if (context.mounted) {
-                      Navigator.of(context).pushNamed(
+                      Navigator.of(context).pushReplacementNamed(
                         ResultScreen.route,
                         arguments: id,
                       );

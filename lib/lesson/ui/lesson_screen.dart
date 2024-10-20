@@ -21,10 +21,11 @@ class LessonScreen extends HookWidget {
       return Center(child: CircularProgressIndicator());
     }
 
+    final attemptsRefreshTrigger = useState(0);
     final previousAttempts = useMemoFuture(
       () async {
         final user = await di.authService.currentUser();
-        return di.lessonService.getAttempts(quiz.requireData.id, user!.login);
+        return di.lessonService.getAttempts(user!.login, quiz.requireData.id);
       },
     );
 
@@ -45,10 +46,13 @@ class LessonScreen extends HookWidget {
                 FilledButton(
                   onPressed: quiz.requireData.isLocked
                       ? null
-                      : () => Navigator.of(context).pushNamed(
+                      : () async {
+                          await Navigator.of(context).pushNamed(
                             QuestionsScreen.route,
                             arguments: quiz.requireData.id,
-                          ),
+                          );
+                          attemptsRefreshTrigger.value++;
+                        },
                   child: const Text('Begin'),
                 ),
               ],
@@ -56,7 +60,8 @@ class LessonScreen extends HookWidget {
           ),
           if (previousAttempts.connectionState == ConnectionState.waiting)
             Center(child: CircularProgressIndicator()),
-          if (previousAttempts.data != null)
+          if (previousAttempts.data != null &&
+              previousAttempts.requireData.isNotEmpty)
             PreviousAttemptsSection(attempts: previousAttempts.requireData),
         ],
       ),

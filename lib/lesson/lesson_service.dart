@@ -7,6 +7,7 @@ abstract class LessonService {
   Future<List<Lesson>> getLessons(Level level);
   Future<Lesson> getLesson(String id);
   Future<List<Attempt>> getAttempts(String user, String lessonId);
+  Future<Attempt> getAttempt(String id);
   Future<String> submit(String user, String lessonId, List<int> answers);
 }
 
@@ -63,12 +64,20 @@ class LocalLessonService implements LessonService {
   @override
   Future<List<Attempt>> getAttempts(String user, String lessonId) {
     return _attempts
-        .where('userId', isEqualTo: user)
-        .where('lessonId', isEqualTo: lessonId)
         .get()
         .then(
           (value) => value!.values.map((e) => Attempt.fromJson(e)).toList(),
+        )
+        .then(
+          (value) => value
+              .where((e) => e.userId == user && e.lessonId == lessonId)
+              .toList(),
         );
+  }
+
+  @override
+  Future<Attempt> getAttempt(String id) {
+    return _attempts.doc(id).get().then((value) => Attempt.fromJson(value!));
   }
 
   static Future<void> maybeInitializeFromCsv() async {
@@ -116,7 +125,7 @@ class LocalLessonService implements LessonService {
           id: uuid.v7(),
           content: task,
           answers: [a, b, c, d],
-          correctAnswerIndex: int.parse(answer),
+          correctAnswerIndex: int.parse(answer) - 1,
           comment: comment,
           level: level == '1' ? Level.b1 : Level.b2,
         ),
