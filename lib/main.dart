@@ -8,6 +8,7 @@ import 'package:ios/lesson/lesson_service.dart';
 import 'package:ios/lesson/ui/lesson_screen.dart';
 import 'package:ios/lesson/ui/questions_screen.dart';
 import 'package:ios/lesson/ui/result_screen.dart';
+import 'package:ios/user/ui/user_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
         LessonScreen.route: (_) => const LessonScreen(),
         QuestionsScreen.route: (_) => const QuestionsScreen(),
         ResultScreen.route: (_) => const ResultScreen(),
+        UserScreen.route: (_) => const UserScreen(),
       },
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),

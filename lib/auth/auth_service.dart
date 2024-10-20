@@ -8,6 +8,8 @@ abstract class AuthService {
 
   Future<User?> login(String login, String password);
   Future<User?> createAccount(String login, String password);
+  Future<void> changePassword(String oldPassword, String newPassword);
+  Future<void> logout();
 }
 
 class LocalAuthService implements AuthService {
@@ -16,6 +18,26 @@ class LocalAuthService implements AuthService {
   LocalAuthService({required this.userService});
 
   final UserService userService;
+
+  @override
+  Future<void> logout() {
+    return prefs.remove(_loginKey);
+  }
+
+  @override
+  Future<void> changePassword(String oldPassword, String newPassword) async {
+    final login = prefs.getString(_loginKey);
+    if (login == null) {
+      throw Exception('Not logged in');
+    }
+
+    final user = await userService.getUser(login);
+    if (user == null || user.password != oldPassword) {
+      throw Exception('Invalid password');
+    }
+
+    await userService.saveUser(user.copyWith(password: newPassword));
+  }
 
   @override
   Future<bool> isAuthenticated() async {
