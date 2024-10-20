@@ -7,12 +7,14 @@ class User {
     required this.login,
     required this.password,
     this.level,
+    this.image,
   });
 
   final String login;
   final String password;
 
   final Level? level;
+  final String? image;
 
   bool isInitialized() => level != null;
 

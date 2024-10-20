@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:ios/auth/ui/auth_screen.dart';
 import 'package:ios/di.dart';
 import 'package:ios/user/user.dart';
@@ -13,7 +16,11 @@ class UserScreen extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = useMemoFuture(() => di.authService.currentUser());
+    final userRefreshTrigger = useState(0);
+    final user = useMemoFuture(
+      () => di.authService.currentUser(),
+      [userRefreshTrigger.value],
+    );
 
     if (user.connectionState == ConnectionState.waiting) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -30,14 +37,35 @@ class UserScreen extends HookWidget {
               children: [
                 CircleAvatar(
                   radius: 64,
-                  child: Icon(Icons.person_outline, size: 72),
+                  child: user.requireData!.image != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(64),
+                          child: Image.memory(
+                            base64Decode(user.requireData!.image!),
+                            width: 128,
+                            height: 128,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Icon(Icons.person_outline, size: 72),
                 ),
                 Positioned(
                   bottom: 0,
                   right: 0,
                   child: IconButton.filled(
                     icon: Icon(Icons.edit),
-                    onPressed: () {},
+                    onPressed: () async {
+                      final image = await ImagePicker()
+                          .pickImage(source: ImageSource.gallery);
+
+                      if (image != null) {
+                        await di.userService.updateImage(
+                          user.requireData!.login,
+                          image,
+                        );
+                        userRefreshTrigger.value++;
+                      }
+                    },
                   ),
                 ),
               ],

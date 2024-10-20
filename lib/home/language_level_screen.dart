@@ -58,7 +58,7 @@ class LanguageLevelScreen extends HookWidget {
   }
 
   void _onLevelSelected(BuildContext context, Level level, User user) {
-    di.userService.updateUserLevel(user.login, level);
+    di.userService.updateLevel(user.login, level);
     Navigator.of(context).pushReplacementNamed(HomeScreen.route);
   }
 }
