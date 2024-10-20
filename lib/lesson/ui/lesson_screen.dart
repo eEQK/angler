@@ -45,8 +45,10 @@ class LessonScreen extends HookWidget {
                 FilledButton(
                   onPressed: quiz.requireData.isLocked
                       ? null
-                      : () => Navigator.of(context)
-                          .pushNamed(QuestionsScreen.route),
+                      : () => Navigator.of(context).pushNamed(
+                            QuestionsScreen.route,
+                            arguments: quiz.requireData.id,
+                          ),
                   child: const Text('Begin'),
                 ),
               ],

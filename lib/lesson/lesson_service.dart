@@ -7,7 +7,7 @@ abstract class LessonService {
   Future<List<Lesson>> getLessons(Level level);
   Future<Lesson> getLesson(String id);
   Future<List<Attempt>> getAttempts(String user, String lessonId);
-  Future<void> submit(String user, String lessonId, List<int> answers);
+  Future<String> submit(String user, String lessonId, List<int> answers);
 }
 
 const _lessonsCsv = 'assets/grammar.csv';
@@ -35,7 +35,7 @@ class LocalLessonService implements LessonService {
   }
 
   @override
-  Future<void> submit(String user, String lessonId, List<int> answers) async {
+  Future<String> submit(String user, String lessonId, List<int> answers) async {
     final lesson = await getLesson(lessonId);
 
     var correct = 0;
@@ -56,6 +56,8 @@ class LocalLessonService implements LessonService {
             score: correct / lesson.questions.length,
           ).toJson(),
         );
+
+    return id;
   }
 
   @override
