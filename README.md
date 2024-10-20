@@ -1,20 +1,19 @@
-# ios
+# Angler
 
-A new Flutter project.
+Uni assignment app -- learn English via quizzes.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+#### Figma:
+* https://www.figma.com/design/3DqYG2yx1sRJcUWyB2dTNv/projekt?node-id=0-1&t=2vdLyykrMDoBnqKV-1
 
-A few resources to get you started if this is your first Flutter project:
+#### Setup:
+* flutter beta/master channel
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
+#### Run it:
+```
+flutter run --enable-experiment=macros
+```
 
 ## Credits
 
