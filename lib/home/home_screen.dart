@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ios/auth/ui/auth_screen.dart';
 import 'package:ios/di.dart';
 import 'package:ios/home/language_level_screen.dart';
@@ -10,6 +13,9 @@ import 'package:ios/user/user.dart';
 import 'package:ios/utils/hooks.dart';
 import 'package:ios/widgets/spacing.dart';
 
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
 class HomeScreen extends HookWidget {
   const HomeScreen({super.key});
 
@@ -17,6 +23,11 @@ class HomeScreen extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
+    useEffect(() {
+      _maybeScheduleNotification(context);
+      return null;
+    });
+
     final user = useMemoFuture(() => di.authService.currentUser());
     useEffect(
       () {
@@ -105,6 +116,43 @@ class HomeScreen extends HookWidget {
     } else if (!user.requireData!.isInitialized()) {
       Navigator.of(context).pushReplacementNamed(LanguageLevelScreen.route);
     }
+  }
+
+  void _maybeScheduleNotification(BuildContext context) async {
+    final plugin = FlutterLocalNotificationsPlugin();
+    if (Platform.isAndroid) {
+      final platform = plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      final approved = await platform?.requestNotificationsPermission() == true;
+
+      if (!approved) {
+        return;
+      }
+
+      const channel = AndroidNotificationChannel(
+        'reminders',
+        'Reminders',
+        description: 'Daily reminders',
+        importance: Importance.high,
+      );
+      platform?.createNotificationChannel(channel);
+    }
+
+    await plugin.periodicallyShow(
+      0,
+      'Time to study!',
+      'You have new lessons to learn',
+      RepeatInterval.everyMinute,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'reminders',
+          'reminders',
+          channelDescription: 'Daily reminders',
+          icon: '@mipmap/ic_launcher',
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexact,
+    );
   }
 }
 

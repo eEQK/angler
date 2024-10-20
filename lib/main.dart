@@ -11,12 +11,17 @@ import 'package:ios/lesson/ui/result_screen.dart';
 import 'package:ios/user/ui/user_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 late final SharedPreferencesWithCache prefs;
 final uuid = const Uuid();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  tz.initializeTimeZones();
+  tz.setLocalLocation(tz.getLocation('Europe/Berlin'));
 
   await LocalLessonService.maybeInitializeFromCsv();
   prefs = await SharedPreferencesWithCache.create(
